@@ -31,6 +31,7 @@ document.querySelectorAll('.block').forEach(element => {
       calculateNumbers()
     }
     openSpace(elemLine, elemColumn)
+    winGame()
   })
 
   element.addEventListener('contextmenu',(ev)=>{
@@ -53,6 +54,21 @@ document.querySelectorAll('.block').forEach(element => {
     return false
   }, false)
 })
+
+function winGame(){
+  let count = 0
+  for (let i = 0; i < 10; i++) {
+    for (let j = 0; j < 25; j++) {
+      let elem = document.getElementById(`${i},${j}`)
+      if(elem.classList.contains('white') || map[i][j] === 'bomb'){
+        count++
+      }
+    }
+  }
+  if(count == (10 * 25)){
+    alert('YOU WIN!')
+  }
+}
 
 function calculateNumbers(){
   for (let i = 0; i < 10; i++) {
