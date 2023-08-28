@@ -1,10 +1,56 @@
 //10 x 25
-let qntBombs = 30
+let qntBombs = 45
+let bombsCloseLimit = 4
+let firstsWhiteSpaces = 10
+
+let amountLines = 10
+let amountColumns = 25
+
 let map = []
 let playZone = document.getElementById('playingzone')
 let firstClick = true
+let losed = false
+let winned = false
 
-fillMap()
+reloadGame()
+function loadGame(){
+  let dificult =  document.querySelector('#dificult')
+
+  switch (dificult.selectedIndex) {
+    case 0: //easy
+      qntBombs = 35
+      bombsCloseLimit = 3
+      firstsWhiteSpaces = 20
+      break
+    case 1: //normal
+      qntBombs = 45
+      bombsCloseLimit = 4
+      firstsWhiteSpaces = 10
+      break
+    case 2: //hard
+      qntBombs = 55
+      bombsCloseLimit = 5
+      firstsWhiteSpaces = 7
+      break
+  }
+}
+
+document.querySelector('#reload').addEventListener('click',reloadGame)
+
+function reloadGame(){
+  loadGame()
+  console.log(qntBombs)
+
+  playZone.innerHTML = ''
+  map = []
+  firstClick = true
+  losed = false
+  winned = false
+  fillMap()
+  loadBlocks()
+}
+
+
 function fillMap(){
   for (let i = 0; i < 10; i++) {
     map[i] = []
@@ -12,61 +58,68 @@ function fillMap(){
       let block = document.createElement('div')
       block.id = `${i},${j}`
       block.className = 'block'
-      playZone.appendChild(block)
+      playZone.appendChild(block)  
       map[i][j] = null
     }
   }
 }
 
-
-document.querySelectorAll('.block').forEach(element => {
-  element.addEventListener('click',()=>{
-    let elemLine = Number.parseInt(element.id.split(',')[0])
-    let elemColumn = Number.parseInt(element.id.split(',')[1])
-    if(firstClick){
-      firstClick = false
-      element.classList.add('white') 
-      openFirstSpace(elemLine, elemColumn)
-      plantbombs()
-      calculateNumbers()
-    }
-    openSpace(elemLine, elemColumn)
-    winGame()
-  })
-
-  element.addEventListener('contextmenu',(ev)=>{
-    ev.preventDefault()
-    let hasWarning = false
-    let canBeWarning = true
-    element.classList.forEach(e => {
-      if(e === 'warning')
-        hasWarning = true
-      if(e === 'white')
-        canBeWarning = false
-    })
-    if(canBeWarning){
-      if(hasWarning){
-        element.classList.remove('warning')
-      }else{
-        element.classList.add('warning')
+function loadBlocks(){
+  document.querySelectorAll('.block').forEach(element => {
+    element.addEventListener('click',()=>{
+      if(losed !== true && winned !== true){
+        let elemLine = Number.parseInt(element.id.split(',')[0])
+        let elemColumn = Number.parseInt(element.id.split(',')[1])
+        if(firstClick){
+          firstClick = false
+          element.classList.add('white') 
+          openFirstSpace(elemLine, elemColumn)
+          plantbombs()
+          calculateNumbers()
+        }
+        openSpace(elemLine, elemColumn)
+        winGame()
       }
-    }
-    return false
-  }, false)
-})
+    })
+  
+    element.addEventListener('contextmenu',(ev)=>{
+      ev.preventDefault()
+      let hasWarning = false
+      let canBeWarning = true
+      element.classList.forEach(e => {
+        if(e === 'warning')
+          hasWarning = true
+        if(e === 'white')
+          canBeWarning = false
+      })
+      if(canBeWarning){
+        if(hasWarning){
+          element.classList.remove('warning')
+        }else{
+          element.classList.add('warning')
+        }
+      }
+      return false
+    }, false)
+  })
+}
+
 
 function winGame(){
-  let count = 0
-  for (let i = 0; i < 10; i++) {
-    for (let j = 0; j < 25; j++) {
-      let elem = document.getElementById(`${i},${j}`)
-      if(elem.classList.contains('white') || map[i][j] === 'bomb'){
-        count++
+  if(losed !== true){
+    let count = 0
+    for (let i = 0; i < 10; i++) {
+      for (let j = 0; j < 25; j++) {
+        let elem = document.getElementById(`${i},${j}`)
+        if(elem.classList.contains('white') || map[i][j] === 'bomb'){
+          count++
+        }
       }
     }
-  }
-  if(count == (10 * 25)){
-    alert('YOU WIN!')
+    if(count == (10 * 25)){
+      winned = true
+      alert('YOU WIN!')
+    }
   }
 }
 
@@ -139,22 +192,25 @@ function openSpace(line, column){
 }
 
 function loseGame(){
-  for (let i = 0; i < 10; i++) {
-    for (let j = 0; j < 25; j++) {
-      let elem = document.getElementById(`${i},${j}`)
-      if(map[i][j] !== 'bomb'){
-        elem.classList.add('white')
-      }else{
-        elem.classList.add('bomb')
-      }
-    }    
+  if(winned !== true){
+    for (let i = 0; i < 10; i++) {
+      for (let j = 0; j < 25; j++) {
+        let elem = document.getElementById(`${i},${j}`)
+        if(map[i][j] !== 'bomb'){
+          elem.classList.add('white')
+        }else{
+          elem.classList.add('bomb')
+        }
+      }    
+    }
+  
+    losed = true
+    alert('you lose!')
   }
-
-  alert('you lose!')
 }
 
 function openFirstSpace(line, column){
-  let whiteSpaces = 10
+  let whiteSpaces = firstsWhiteSpaces
   map[line][column] = 'white'
   do {
     let randomLine = getRandomInt(0,10)
@@ -169,7 +225,7 @@ function openFirstSpace(line, column){
 }
 
 function plantbombs(){
-  bombs = 45
+  bombs = qntBombs
   do {
     let randomLine = getRandomInt(0,10)
     let randomColumn = getRandomInt(0,25)
@@ -198,8 +254,6 @@ function checkSurroundings(line, column, whatToSearch){
 }
 
 function checkSurroundingsBombs(line, column, whatToSearch){
-  let bombsCloseLimit = 4
-
   return (
     (map[line][column] !== whatToSearch) &&
     (calculateBombsNearby(line, column, whatToSearch) < bombsCloseLimit) &&
